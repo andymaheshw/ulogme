@@ -14,20 +14,16 @@ def loadEvents(fname):
   Also keeps track of min and max time seen in global mint,maxt
   """
   events = []
-
-  try:
-    ws = open(fname, 'r').read().decode('utf-8').splitlines()
-    events = []
-    for w in ws:
-      ix = w.find(' ') # find first space, that's where stamp ends
-      stamp = int(w[:ix])
-      str = w[ix+1:]
-      events.append({'t':stamp, 's':str})
-  except Exception, e:
-    print '%s probably does not exist, setting empty events list.' % (fname, )
-    print 'error was:'
-    print e
-    events = []
+  ws = open(fname, 'r').read().splitlines()
+  events = []
+  for w in ws:
+    ix = w.find(' ') # find first space, that's where stamp ends
+    stamp = int(w[:ix])
+    str = w[ix+1:]
+    events.append({'t': stamp, 's': str})
+#  except Exception as e:
+    # print ('%s probably does not exist, setting empty events list.' % (fname, ))
+    # print ('error was:', e)
   return events
 
 def mtime(f):
@@ -46,10 +42,13 @@ def updateEvents():
   """
   L = []
   L.extend(glob.glob("logs/keyfreq_*.txt"))
-  L.extend(glob.glob("logs/window_*.txt"))
-  L.extend(glob.glob("logs/notes_*.txt"))
+  #L.extend(glob.glob("logs/window_*.txt"))
+  #L.extend(glob.glob("logs/blog_*.txt"))
 
   # extract all times. all log files of form {type}_{stamp}.txt
+  for x in L:
+    print(x, type(x))
+    print(x[x.find('_')+1:x.find('.txt')])
   ts = [int(x[x.find('_')+1:x.find('.txt')]) for x in L]
   ts = list(set(ts))
   ts.sort()
@@ -67,12 +66,12 @@ def updateEvents():
     t0 = t
     t1 = t0 + 60*60*24 # 24 hrs later
     fout = 'events_%d.json' % (t0, )
-    out_list.append({'t0':t0, 't1':t1, 'fname': fout})
-
+    out_list.append({"t0": t0, "t1": t1, "fname": fout})
+    print(out_list[0])
     fwrite = os.path.join(RENDER_ROOT, fout)
     e1f = 'logs/window_%d.txt' % (t0, )
     e2f = 'logs/keyfreq_%d.txt' % (t0, )
-    e3f = 'logs/notes_%d.txt' % (t0, )
+    # e3f = 'logs/notes_%d.txt' % (t0, )
     e4f = 'logs/blog_%d.txt' % (t0, )
 
     dowrite = False
@@ -83,11 +82,11 @@ def updateEvents():
       tmod = mtime(fwrite)
       e1mod = mtime(e1f)
       e2mod = mtime(e2f)
-      e3mod = mtime(e3f)
+      # e3mod = mtime(e3f)
       e4mod = mtime(e4f)
-      if e1mod > tmod or e2mod > tmod or e3mod > tmod or e4mod > tmod:
+      if e1mod > tmod or e2mod > tmod or e4mod > tmod: #or e3mod > tmod
         dowrite = True # better update!
-        print 'a log file has changed, so will update %s' % (fwrite, )
+        print ('a log file has changed, so will update %s' % (fwrite, ))
     else:
       # output file doesnt exist, so write.
       dowrite = True
@@ -96,21 +95,21 @@ def updateEvents():
       # okay lets do work
       e1 = loadEvents(e1f)
       e2 = loadEvents(e2f)
-      e3 = loadEvents(e3f)
+      # e3 = loadEvents(e3f)
       for k in e2: k['s'] = int(k['s']) # int convert
 
       e4 = ''
       if os.path.isfile(e4f):
         e4 = open(e4f, 'r').read()
 
-      eout = {'window_events': e1, 'keyfreq_events': e2, 'notes_events': e3, 'blog': e4}
+      eout = {"window_events": e1, "keyfreq_events": e2, "notes_events": e4, "blog": e4}
       open(fwrite, 'w').write(json.dumps(eout))
-      print 'wrote ' + fwrite
-
-  fwrite = os.path.join(RENDER_ROOT, 'export_list.json')
-  open(fwrite, 'w').write(json.dumps(out_list).encode('utf8'))
-  print 'wrote ' + fwrite
+      print ('wrote ' + fwrite)
+  with open(os.path.join(RENDER_ROOT, 'export_list.json'), 'w') as fwrite:
+    json.dump(out_list, fwrite)
 
 # invoked as script
 if __name__ == '__main__':
   updateEvents()
+
+

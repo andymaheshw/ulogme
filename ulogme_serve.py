@@ -1,5 +1,5 @@
-import SocketServer
-import SimpleHTTPServer
+import socketserver
+import http.server
 import sys
 import cgi
 import os
@@ -14,15 +14,15 @@ if len(sys.argv) > 1:
 else:
   PORT = 8124
 
-# serve r ender/ folder, not current folder
+# serve render/ folder, not current folder
 rootdir = os.getcwd()
 os.chdir('render')
 
 # Custom handler
-class CustomHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class CustomHandler(http.server.SimpleHTTPRequestHandler):
   def do_GET(self):
     # default behavior
-    SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+    http.server.SimpleHTTPRequestHandler.do_GET(self)
 
   def do_POST(self):
     form = cgi.FieldStorage(
@@ -60,15 +60,15 @@ class CustomHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
       open('logs/blog_%d.txt' % (post_time, ), 'w').write(post)
       updateEvents() # defined in export_events.py
       os.chdir('render') # go back to render
-      result = 'OK'
+      result = b'OK'
 
     self.send_response(200)
     self.send_header('Content-type','text/html')
     self.end_headers()
     self.wfile.write(result)
 
-httpd = SocketServer.ThreadingTCPServer((IP, PORT), CustomHandler)
+httpd = socketserver.ThreadingTCPServer((IP, PORT), CustomHandler)
 
-print 'Serving ulogme, see it on http://localhost:' + `PORT`
+print ('Serving ulogme, see it on http://localhost:' + 'PORT')
 httpd.serve_forever()
 
